@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#F5A623">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="สแกน GS">
+<title>สแกน Tracking → แจ้งมาถึง</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --or:#F5A623;--ord:#E8920A;--or2:#FD7B00;--orl:#FFF3E0;--orl2:#FFE0B2;
+  --grn:#27AE60;--grnl:#E8F8EF;--red:#E74C3C;--redl:#FDECEA;
+  --text:#1a1a1a;--text2:#7a5c2e;--bg:#FFF8F0;--bdr:#FFD49A;
+  --font:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans Thai',sans-serif;
+  --safe-top:env(safe-area-inset-top);--safe-bot:env(safe-area-inset-bottom)
+}
+body{font-family:var(--font);background:var(--bg);min-height:100vh;padding-bottom:calc(30px + var(--safe-bot));-webkit-text-size-adjust:100%}
+.app{max-width:480px;margin:0 auto}
+.topbar{background:linear-gradient(135deg,#F5A623,#FD7B00);padding:calc(14px + var(--safe-top)) 16px 14px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;box-shadow:0 2px 12px rgba(245,166,35,0.35)}
+.topbar-info h1{font-size:16px;font-weight:700;color:#fff}
+.topbar-info p{font-size:11px;color:rgba(255,255,255,0.85);margin-top:1px}
+.dot{width:9px;height:9px;border-radius:50%;background:#facc15;flex-shrink:0;transition:all .3s}
+.dot.ok{background:#4ade80;box-shadow:0 0 0 3px rgba(74,222,128,0.25)}
+.dot.err{background:#f87171}
+.steps{display:flex;align-items:flex-start;justify-content:space-between;background:#fff;border-radius:14px;padding:14px 8px 12px;margin:14px 14px 0;border:1.5px solid var(--bdr);box-shadow:0 2px 8px rgba(245,166,35,0.08)}
+.step{display:flex;flex-direction:column;align-items:center;gap:6px;flex:1}
+.sic{width:38px;height:38px;border-radius:50%;background:var(--orl);border:2px solid var(--bdr);display:flex;align-items:center;justify-content:center;transition:all .3s}
+.sic.done{background:var(--or);border-color:var(--or)}
+.sic.active{background:var(--or2);border-color:var(--or2);box-shadow:0 0 0 4px rgba(253,123,0,0.18)}
+.sic i{font-size:16px;color:#ddd;transition:color .3s}
+.sic.done i,.sic.active i{color:#fff}
+.slbl{font-size:9px;color:#ccc;text-align:center;line-height:1.4;max-width:54px;transition:color .3s}
+.slbl.on{color:var(--ord);font-weight:700}
+.sline{flex:1;height:2.5px;background:var(--orl2);margin-top:18px;border-radius:99px;transition:background .3s}
+.sline.done{background:var(--or)}
+.section{padding:14px}
+.lbl{font-size:11px;font-weight:700;color:var(--ord);letter-spacing:.6px;margin-bottom:6px;margin-top:14px;text-transform:uppercase}
+.scan-wrap{position:relative}
+.scan-inp{width:100%;border:2px solid var(--bdr);border-radius:14px;padding:14px 50px 14px 50px;font-size:16px;color:var(--text);background:#fff;outline:none;font-family:var(--font);-webkit-appearance:none;transition:border .15s,box-shadow .15s}
+.scan-inp:focus{border-color:var(--or);box-shadow:0 0 0 3px rgba(245,166,35,0.15)}
+.scan-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:22px;color:var(--or)}
+.clear-btn{position:absolute;right:14px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:20px;color:#bbb;padding:4px;display:none}
+.clear-btn.show{display:block}
+.fields-card{background:#fff;border:1.5px solid var(--bdr);border-radius:14px;padding:14px;margin-top:14px;display:none}
+.fields-card.show{display:block}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.field{display:flex;flex-direction:column;gap:5px}
+.field.full{grid-column:1/-1}
+.field-label{font-size:11px;font-weight:700;color:var(--ord);letter-spacing:.5px;text-transform:uppercase}
+.field-val{background:var(--orl);border:1.5px solid var(--bdr);border-radius:10px;padding:11px 13px;font-size:14px;font-weight:600;color:var(--text);min-height:44px;display:flex;align-items:center;word-break:break-all}
+.status-ok{background:var(--grnl);color:var(--grn);border-radius:99px;padding:5px 14px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:5px}
+.status-other{background:var(--orl2);color:var(--ord);border-radius:99px;padding:5px 14px;font-size:12px;font-weight:700;display:inline-flex;align-items:center;gap:5px}
+.btn-arrive{width:100%;background:linear-gradient(135deg,#F5A623,#FD7B00);color:#fff;border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:9px;margin-top:14px;box-shadow:0 4px 16px rgba(245,166,35,0.4);font-family:var(--font);transition:opacity .15s}
+.btn-arrive:active{opacity:.85}
+.btn-arrive:disabled{opacity:.4;cursor:default;box-shadow:none}
+.btn-arrive.done-btn{background:linear-gradient(135deg,#27AE60,#1a8a4a);box-shadow:0 4px 16px rgba(39,174,96,0.35)}
+.alert{border-radius:12px;padding:14px;margin-top:14px;display:none;align-items:flex-start;gap:10px;font-size:13px;line-height:1.5}
+.alert.show{display:flex}
+.alert i{font-size:20px;flex-shrink:0;margin-top:1px}
+.alert-ok{background:var(--grnl);border:1.5px solid #a8ddc0;color:#1a6e3a}
+.alert-err{background:var(--redl);border:1.5px solid #f5bbb8;color:#8a2020}
+.state-box{text-align:center;padding:40px 20px;color:var(--text2)}
+.state-box i{font-size:52px;color:var(--bdr);display:block;margin-bottom:12px}
+.state-box p{font-size:14px;line-height:1.7}
+.state-box strong{color:var(--ord)}
+.spinner-sm{width:18px;height:18px;border:3px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite}
+.spinner-or{width:20px;height:20px;border:3px solid var(--orl2);border-top-color:var(--or);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+.loading{display:flex;align-items:center;justify-content:center;gap:10px;padding:30px;color:var(--ord);font-size:14px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.multi-card{background:#fff;border:1.5px solid var(--bdr);border-radius:12px;padding:12px 14px;margin-top:8px;cursor:pointer;transition:border .15s}
+.multi-card:active{border-color:var(--or);background:var(--orl)}
+.multi-card-gs{font-size:14px;font-weight:700;color:var(--ord)}
+.multi-card-track{font-size:12px;color:var(--text2);margin-top:3px}
+.found-bar{font-size:12px;color:var(--text2);margin-top:10px;display:flex;align-items:center;gap:6px}
+.found-num{background:var(--or);color:#fff;border-radius:99px;padding:2px 9px;font-size:11px;font-weight:700}
+.sheet-row{background:var(--orl);border:1px solid var(--bdr);border-radius:8px;padding:7px 12px;margin-top:5px;display:flex;justify-content:space-between;align-items:center;font-size:12px}
+.sheet-row span:first-child{color:var(--text2)}
+.sheet-row span:last-child{font-weight:700;color:var(--text)}
+.row-badge{display:inline-block;background:var(--or);color:#fff;border-radius:6px;padding:2px 9px;font-size:11px;font-weight:700;margin-left:6px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="dot" id="connDot"></div>
+    <div class="topbar-info">
+      <h1>📦 สแกน → แจ้งสินค้ามาถึง</h1>
+      <p id="connLabel">กำลังโหลดข้อมูลจาก Sheet...</p>
+    </div>
+  </div>
+
+  <div class="steps">
+    <div class="step">
+      <div class="sic done"><i class="ti ti-building-warehouse"></i></div>
+      <div class="slbl on">โกดังจีน</div>
+    </div>
+    <div class="sline done"></div>
+    <div class="step">
+      <div class="sic active"><i class="ti ti-flag"></i></div>
+      <div class="slbl on">โกดังไทย</div>
+    </div>
+    <div class="sline" id="line3"></div>
+    <div class="step">
+      <div class="sic" id="sic3"><i class="ti ti-coin"></i></div>
+      <div class="slbl" id="slbl3">รอชำระเงิน</div>
+    </div>
+    <div class="sline" id="line4"></div>
+    <div class="step">
+      <div class="sic" id="sic4"><i class="ti ti-checkbox"></i></div>
+      <div class="slbl" id="slbl4">จัดส่งแล้ว</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="lbl">สแกนหรือพิมพ์ Tracking No.</div>
+    <div class="scan-wrap">
+      <i class="ti ti-scan scan-icon" aria-hidden="true"></i>
+      <input class="scan-inp" id="scanInp" type="text"
+        placeholder="สแกน Barcode หรือพิมพ์ Tracking..."
+        autocomplete="off" autocorrect="off" autocapitalize="off"
+        oninput="onInput(this.value)">
+      <button class="clear-btn" id="clearBtn" onclick="clearAll()">
+        <i class="ti ti-x"></i>
+      </button>
+    </div>
+
+    <div class="alert alert-err" id="alertErr">
+      <i class="ti ti-alert-circle"></i>
+      <div id="errMsg"></div>
+    </div>
+
+    <div class="alert alert-ok" id="alertOk">
+      <i class="ti ti-circle-check"></i>
+      <div style="width:100%">
+        <div style="font-weight:700;margin-bottom:6px">แจ้งสำเร็จ! <span class="row-badge" id="rowNum"></span></div>
+        <div id="okRows"></div>
+      </div>
+    </div>
+
+    <div id="stateArea">
+      <div class="state-box">
+        <i class="ti ti-scan"></i>
+        <p>สแกน Barcode หรือพิมพ์<br><strong>Tracking No.</strong><br>ข้อมูลจะเด้งมาจาก Sheet ทันที</p>
+      </div>
+    </div>
+
+    <!-- Result card -->
+    <div class="fields-card" id="resultCard">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="background:linear-gradient(135deg,#F5A623,#FD7B00);color:#fff;border-radius:8px;padding:5px 14px;font-size:15px;font-weight:700" id="resGS">—</div>
+        <div id="resStatus"></div>
+      </div>
+      <div class="field-row">
+        <div class="field full">
+          <div class="field-label">Tracking No.</div>
+          <div class="field-val" id="resTracking">—</div>
+        </div>
+        <div class="field">
+          <div class="field-label">ประเภทสินค้า</div>
+          <input class="field-val" id="resShipment" type="text" placeholder="กรอกประเภทสินค้า..." style="border:1.5px solid var(--bdr);font-family:var(--font);width:100%;outline:none">
+        </div>
+        <div class="field">
+          <div class="field-label">จำนวน</div>
+          <div class="field-val" id="resQty">—</div>
+        </div>
+        <div class="field">
+          <div class="field-label">น้ำหนัก (กก.)</div>
+          <div class="field-val" id="resWeight">—</div>
+        </div>
+        <div class="field">
+          <div class="field-label">คิว (CBM)</div>
+          <div class="field-val" id="resCbm">—</div>
+        </div>
+        <div class="field">
+          <div class="field-label">ส่งโดย</div>
+          <div class="field-val" id="resShipBy">—</div>
+        </div>
+        <div class="field full">
+          <div class="field-label">ขนาด กว้าง × ยาว × สูง (ซม.)</div>
+          <div class="field-val" id="resSize">—</div>
+        </div>
+      </div>
+
+      <!-- ปุ่มแจ้งมาถึง -->
+      <button class="btn-arrive" id="arriveBtn" onclick="notifyArrival()">
+        <i class="ti ti-circle-check"></i> แจ้งสินค้ามาถึงโกดังไทย
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ====================================================
+//  ตั้งค่า
+// ====================================================
+var SHEET_ID   = "1Be7Igf8LI_zlQfdzFcucvKeiQy5Ve55MogJwgUphckQ";
+var SHEET_NAME = "May-26";
+// Apps Script URL สำหรับอัปเดตสถานะใน Sheet
+// *** ใส่ URL ของ Apps Script ที่ Deploy ไว้แล้ว ***
+var SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwuwV1OVLN-t-mHwm05GWnfWk1gw9jXJTJckTY6VTnpYwwQxSTHElFz5szCncXLklPPvQ/exec";
+
+var allData = [], dataLoaded = false, searchTimeout = null;
+var currentRow = null;
+
+// โหลด Sheet
+function loadSheet(){
+  var url = 'https://docs.google.com/spreadsheets/d/'+SHEET_ID+'/gviz/tq?tqx=out:json&sheet='+encodeURIComponent(SHEET_NAME);
+  fetch(url)
+    .then(function(r){ return r.text(); })
+    .then(function(text){
+      var json = JSON.parse(text.match(/google\.visualization\.Query\.setResponse\(([\s\S]*?)\);?\s*$/)[1]);
+      var cols = json.table.cols;
+      var rows = json.table.rows;
+      allData = rows.map(function(r){
+        var obj = {};
+        cols.forEach(function(c,i){
+          obj[c.label] = r.c && r.c[i] ? (r.c[i].f !== null && r.c[i].f !== undefined ? r.c[i].f : r.c[i].v)||'' : '';
+        });
+        return obj;
+      });
+      dataLoaded = true;
+      document.getElementById('connDot').className = 'dot ok';
+      document.getElementById('connLabel').textContent = 'โหลด '+allData.length+' รายการ — พร้อมสแกน ✓';
+    })
+    .catch(function(err){
+      document.getElementById('connDot').className = 'dot err';
+      document.getElementById('connLabel').textContent = 'โหลดข้อมูลไม่ได้';
+      showErr('โหลด Sheet ไม่ได้: '+err.message);
+    });
+}
+
+function showErr(msg){
+  document.getElementById('errMsg').textContent = msg;
+  document.getElementById('alertErr').classList.add('show');
+  document.getElementById('alertOk').classList.remove('show');
+}
+
+function clearAll(){
+  document.getElementById('scanInp').value = '';
+  document.getElementById('clearBtn').className = 'clear-btn';
+  document.getElementById('alertErr').classList.remove('show');
+  document.getElementById('alertOk').classList.remove('show');
+  document.getElementById('resultCard').classList.remove('show');
+  document.getElementById('stateArea').innerHTML =
+    '<div class="state-box"><i class="ti ti-scan"></i><p>สแกน Barcode หรือพิมพ์<br><strong>Tracking No.</strong><br>ข้อมูลจะเด้งมาจาก Sheet ทันที</p></div>';
+  document.getElementById('sic3').className='sic';
+  document.getElementById('slbl3').className='slbl';
+  document.getElementById('line3').className='sline';
+  var btn=document.getElementById('arriveBtn');
+  btn.disabled=false;
+  btn.className='btn-arrive';
+  btn.innerHTML='<i class="ti ti-circle-check"></i> แจ้งสินค้ามาถึงโกดังไทย';
+  currentRow = null;
+}
+
+function onInput(val){
+  document.getElementById('clearBtn').className = val ? 'clear-btn show' : 'clear-btn';
+  document.getElementById('alertErr').classList.remove('show');
+  document.getElementById('alertOk').classList.remove('show');
+  clearTimeout(searchTimeout);
+  if(!val.trim()){ clearAll(); return; }
+  searchTimeout = setTimeout(function(){ doSearch(val.trim()); }, 400);
+}
+
+function doSearch(q){
+  if(!dataLoaded){
+    document.getElementById('stateArea').innerHTML = '<div class="loading"><div class="spinner-or"></div> กำลังโหลดข้อมูล...</div>';
+    return;
+  }
+  var ql = q.toLowerCase();
+  var results = allData.filter(function(row){
+    return String(row['Tracking No.']||row['Tracking']||'').toLowerCase().includes(ql)
+        || String(row['GS No.']||row['GS']||'').toLowerCase().includes(ql)
+        || String(row['Shipment ID']||'').toLowerCase().includes(ql);
+  });
+
+  if(results.length === 0){
+    document.getElementById('resultCard').classList.remove('show');
+    document.getElementById('stateArea').innerHTML =
+      '<div class="state-box"><i class="ti ti-search-off" style="color:var(--red)"></i><p>ไม่พบ <strong>"'+q+'"</strong><br>ลองพิมพ์ให้ถูกต้องหรือสแกนใหม่</p></div>';
+    return;
+  }
+  if(results.length === 1){ showResult(results[0]); return; }
+
+  document.getElementById('resultCard').classList.remove('show');
+  var html = '<div class="found-bar"><span class="found-num">'+results.length+'</span> รายการที่พบ — เลือก 1 รายการ</div>';
+  results.slice(0,20).forEach(function(row,i){
+    var gs = row['GS No.']||row['GS']||'—';
+    var tr = row['Tracking No.']||row['Tracking']||'—';
+    var wt = row['กิโล']||'';
+    html += '<div class="multi-card" onclick="pickRow('+i+')">'+
+      '<div class="multi-card-gs">'+gs+'</div>'+
+      '<div class="multi-card-track">'+tr+(wt?' · '+wt+' กก.':'')+'</div></div>';
+  });
+  document.getElementById('stateArea').innerHTML = html;
+  window._results = results;
+}
+
+function pickRow(i){ showResult(window._results[i]); }
+
+function showResult(row){
+  // debug: ดู key ทั้งหมดใน console
+  console.log('Row keys:', Object.keys(row));
+  console.log('Row data:', JSON.stringify(row));
+  currentRow = row;
+  document.getElementById('stateArea').innerHTML = '';
+  var gs       = row['GS No.']||row['GS']||'—';
+  var tracking = row['Tracking No.']||row['Tracking']||'—';
+  // ประเภทสินค้า: ไม่ดึงจาก Sheet — ให้ผู้ใช้กรอกเอง (ดูด้านล่างที่ไม่ set ค่าให้ resShipment)
+  var qty      = row['จำนวน']||'—';
+  var weight   = row['กิโล']||row['น้ำหนัก']||'—';
+  var cbm      = row['คิว']||'—';
+  var shipBy   = row['ส่งโดย']||'—';
+  var w=row['กว้าง']||'—', l=row['ยาว']||'—', h=row['สูง']||'—';
+  var status   = row['สถานะ']||row['status']||'—';
+
+  document.getElementById('resGS').textContent       = gs;
+  document.getElementById('resTracking').textContent = tracking;
+  document.getElementById('resShipment').value = ''; // เคลียร์ให้กรอกใหม่ทุกครั้งที่สแกน
+  document.getElementById('resQty').textContent      = qty!=='—'?qty+' ชิ้น':'—';
+  document.getElementById('resWeight').textContent   = weight!=='—'?weight+' กก.':'—';
+  document.getElementById('resCbm').textContent      = cbm;
+  document.getElementById('resShipBy').textContent   = shipBy;
+  document.getElementById('resSize').textContent     = w+' × '+l+' × '+h+' ซม.';
+
+  var statusEl = document.getElementById('resStatus');
+  if(status.includes('รับสินค้า')||status.includes('ถึงโกดังไทย')){
+    statusEl.innerHTML='<span class="status-ok"><i class="ti ti-circle-check" style="font-size:14px"></i>'+status+'</span>';
+    document.getElementById('sic3').className='sic done';
+    document.getElementById('slbl3').className='slbl on';
+    document.getElementById('line3').className='sline done';
+    // ถ้าแจ้งแล้ว ปิดปุ่ม
+    var btn=document.getElementById('arriveBtn');
+    btn.disabled=true;
+    btn.className='btn-arrive done-btn';
+    btn.innerHTML='<i class="ti ti-circle-check"></i> แจ้งมาถึงแล้ว';
+  } else {
+    statusEl.innerHTML='<span class="status-other"><i class="ti ti-clock" style="font-size:14px"></i>'+status+'</span>';
+    var btn=document.getElementById('arriveBtn');
+    btn.disabled=false;
+    btn.className='btn-arrive';
+    btn.innerHTML='<i class="ti ti-circle-check"></i> แจ้งสินค้ามาถึงโกดังไทย';
+  }
+  document.getElementById('resultCard').classList.add('show');
+}
+
+function notifyArrival(){
+  if(!currentRow){ showErr('ไม่พบข้อมูลสินค้า'); return; }
+  var btn = document.getElementById('arriveBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner-sm"></span> กำลังแจ้ง...';
+  document.getElementById('alertOk').classList.remove('show');
+  document.getElementById('alertErr').classList.remove('show');
+
+  var gs       = currentRow['รหัสลูกค้า']||currentRow['GS No.']||currentRow['GS No']||currentRow['GS']||currentRow['gs']||'';
+  var tracking = currentRow['Tracking No.']||currentRow['Tracking']||'';
+  var shipment = document.getElementById('resShipment').value.trim();
+  var weight   = currentRow['กิโล']||currentRow['น้ำหนัก']||'';
+  var cbm      = currentRow['คิว']||'';
+
+  var w      = currentRow['กว้าง']  || '';
+  var l      = currentRow['ยาว']    || '';
+  var h      = currentRow['สูง']    || '';
+  var shipby = currentRow['ส่งโดย'] || '';
+
+  var params = new URLSearchParams({
+    action:   'arrive',
+    gs:       gs,
+    tracking: tracking,
+    shipment: shipment,
+    weight:   weight,
+    cbm:      cbm,
+    shipby:   shipby,
+    w:        w,
+    l:        l,
+    h:        h,
+    status:   'ถึงโกดังไทย'
+  });
+
+  fetch(SCRIPT_URL+'?'+params.toString())
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      if(data.ok){
+        var now = new Date();
+        var dateStr = now.toLocaleDateString('th-TH')+' '+now.getHours()+':'+String(now.getMinutes()).padStart(2,'0')+' น.';
+        document.getElementById('rowNum').textContent = data.row ? 'แถวที่ '+data.row : '';
+        document.getElementById('okRows').innerHTML =
+          [['รหัสลูกค้า',gs],['Tracking',tracking],['น้ำหนัก',weight?weight+' กก.':'—'],
+           ['คิว',cbm||'—'],['เวลาแจ้ง',dateStr]]
+          .map(function(r){ return '<div class="sheet-row"><span>'+r[0]+'</span><span>'+r[1]+'</span></div>'; }).join('');
+        document.getElementById('alertOk').classList.add('show');
+        btn.className='btn-arrive done-btn';
+        btn.innerHTML='<i class="ti ti-circle-check"></i> แจ้งมาถึงแล้ว ✓';
+        document.getElementById('sic3').className='sic done';
+        document.getElementById('slbl3').className='slbl on';
+        document.getElementById('line3').className='sline done';
+        document.getElementById('resStatus').innerHTML='<span class="status-ok"><i class="ti ti-circle-check" style="font-size:14px"></i>ถึงโกดังไทย</span>';
+        window.scrollTo({top:0,behavior:'smooth'});
+      } else {
+        showErr('Script แจ้งว่า: '+(data.message||'ผิดพลาด'));
+        btn.disabled=false;
+        btn.innerHTML='<i class="ti ti-circle-check"></i> แจ้งสินค้ามาถึงโกดังไทย';
+      }
+    })
+    .catch(function(err){
+      showErr('เชื่อมต่อไม่ได้: '+err.message);
+      btn.disabled=false;
+      btn.innerHTML='<i class="ti ti-circle-check"></i> แจ้งสินค้ามาถึงโกดังไทย';
+    });
+}
+
+loadSheet();
+</script>
+</body>
+</html>
